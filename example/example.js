@@ -1,3 +1,3 @@
-var dutchMaster = require('./server')
+var dutchMaster = require('../')
 
 var d = dutchMaster().init('worker.js')

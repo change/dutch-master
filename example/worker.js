@@ -1,10 +1,5 @@
-var cluster = require('cluster')
-  , npid = require('npid')
-  , pidFile = process.env.PID_FILE
+var http = require('http')
 
-process.chdir('deploy')
-var frontend = require('server/app')
-
-frontend.run(3000, function () {
-  process.send('ready')
-})
+http.createServer(function (req, res) {
+  res.end('hi')
+}).listen(8000)
