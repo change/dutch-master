@@ -1,17 +1,16 @@
-# Name
-### dutch_master
+## dutch_master
 
 > Pass on the left hand side.
 
-# Synopsis
+### Synopsis
 
 Rolling restarts.
 
-# Description
+### Description
 
 A simple module to manage worker processes and communicate with them to initiate graceful restarts.
 
-# Example
+### Example
 
 Running: 
 ```javascript
@@ -23,11 +22,11 @@ Initiating a rolling restart:
 kill -SIGUSR2 [pid of master]
 ```
 
-# Install:
+### Install:
 `npm i dutch_master`
 
-# Test:
+### Test:
 todo
 
-#License:
+### License:
 none, this is not open source software currently.
