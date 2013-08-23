@@ -1,0 +1,23 @@
+{
+  "name": "dutch_master",
+  "version": "0.0.0",
+  "description": "Rolling restarts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"todo\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/luk-/dutch-master.git"
+  },
+  "author": "",
+  "license": "none",
+  "bugs": {
+    "url": "https://github.com/luk-/dutch-master/issues"
+  },
+  "dependencies": {
+    "debug": "0.7.2",
+    "npid": "0.3.2",
+    "cluster": "0.7.7"
+  }
+}
