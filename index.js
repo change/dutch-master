@@ -14,11 +14,13 @@ var Dutch = function Dutch () {
   }
 
   sendShutdown = function sendShutdown (worker) {
-    debug('sending shutdown to worker %d', worker.process.pid)
+    var workerPid = worker.process.pid
+    debug('sending shutdown to worker %d', workerPid)
+
     try {
       worker.send('shutdown')
     } catch (e) {
-      debug('unable to send shutdown to worker %d' + worker.process.pid)
+      debug('unable to send shutdown to worker %d' + workerPid)
     }
   }
 
