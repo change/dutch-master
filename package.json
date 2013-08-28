@@ -8,12 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/luk-/dutch-master.git"
+    "url": "git://github.com/change/dutch-master.git"
   },
   "author": "",
   "license": "none",
   "bugs": {
-    "url": "https://github.com/luk-/dutch-master/issues"
+    "url": "https://github.com/change/dutch-master/issues"
   },
   "dependencies": {
     "debug": "0.7.2",
