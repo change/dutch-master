@@ -42,7 +42,14 @@ var Dutch = function Dutch () {
       exec: workerScript
     })
 
-    npid.create(process.env.PID_FILE || pid)
+    try {
+      npid.create(process.env.PID_FILE || pid)
+    }
+    catch (e) {
+      console.error('unable to create PID file')
+      console.error(e)
+      process.exit(1)
+    }
 
     for (var i = 0; i < this.numCPUs; i++) {
       fork()
