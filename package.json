@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "debug": "0.7.2",
-    "npid": "0.3.2",
-    "cluster": "0.7.7"
+    "npid": "0.3.2"
   }
 }
