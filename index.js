@@ -62,11 +62,10 @@ var Dutch = function Dutch () {
     }
   }
 
-  cluster.on('exit', function (worker) {
-    var exitCode = worker.process.exitCode
-    debug('worker %d died with exit code %d', worker.process.pid, exitCode)
+  cluster.on('exit', function (worker, code, signal) {
+    debug('worker %d died with exit code %d %s', worker.process.pid, code, signal)
 
-    !exitCode && fork()
+    fork()
   })
 
   cluster.on('online', function (worker) {
