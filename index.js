@@ -1,87 +1,194 @@
 var cluster = require('cluster')
-  , npid = require('npid')
-  , debug = require('debug')('fe:application')
+  , _ = require('lodash')
+  , async = require('async')
 
-var Dutch = function Dutch () {
-  this.numCPUs = Math.min(require('os').cpus().length, 2)
-  this.workers = []
-  var fork, sendShutdown, nextWorker, handleSignal
+module.exports = function (options) {
+  var logger = options.logger
+    , workers = []
+    , restarting = false
 
-  fork = function fork (env) {
-    env = env || {NODE_PATH: './'}
-    debug('forking new worker')
-    cluster.fork(env)
-  }
+  var numWorkers = _.isFunction(options.numWorkers)
+    ? options.numWorkers()
+    : options.numWorkers
+    || 2
 
-  sendShutdown = function sendShutdown (worker) {
-    var workerPid = worker.process.pid
-    debug('sending shutdown to worker %d', workerPid)
+  cluster.setupMaster({
+    exec: options.worker
+  })
 
-    try {
-      worker.send('shutdown')
-    } catch (e) {
-      debug('unable to send shutdown to worker %d' + workerPid)
+  logger.info({numWorkers: numWorkers}, 'Starting cluster')
+
+  async.times(numWorkers, function (n, next) {
+    newWorker(next)
+  }, function (err, workers) {
+    logger.info({workers: workers.length}, 'Cluster ready')
+  })
+
+  function restartAllWorkers(triggeringEvent) {
+    logger.info(triggeringEvent, 'Restart requested')
+
+    if (restarting) {
+      logger.warn('Restart already in process, ignoring this request')
+      return
     }
-  }
 
-  nextWorker = function nextWorker () {
-    var w = this.workers.pop()
-    if (!w) return
-    fork()
-    sendShutdown(w, 3000)
-  }.bind(this)
+    restarting = true
 
-  handleSignal = function handleSignal () {
-    Object.keys(cluster.workers).forEach(function (i) {
-      this.workers.push(cluster.workers[i])
-    }.bind(this))
-    nextWorker()
-  }.bind(this)
-
-  this.init = function (workerScript, pid) {
-
-    !workerScript && function () {
-      throw new Error('a worker file must be specified')
-    }()
-
-    cluster.setupMaster({
-      exec: workerScript
+    async.each(_.where(workers, {state: 'running'}), restartWorker, function (err) {
+      logger.info('Restart complete')
+      restarting = false
     })
+  }
 
-    try {
-      npid.create(process.env.PID_FILE || pid)
-    }
-    catch (e) {
-      console.error('unable to create PID file')
-      console.error(e)
+  function shutdown(triggeringEvent) {
+    logger.info(triggeringEvent, 'Shutdown requested')
+
+    restarting = true
+
+    var timeout = setTimeout(function () {
+      logger.warn('Cluster did not shutdown cleanly within timeout, exiting')
       process.exit(1)
-    }
+    }, 30000)
 
-    for (var i = 0; i < this.numCPUs; i++) {
-      fork()
-    }
-  }
-
-  cluster.on('exit', function (worker, code, signal) {
-    debug('worker %d died with exit code %d %s', worker.process.pid, code, signal)
-
-    fork()
-  })
-
-  cluster.on('online', function (worker) {
-    debug('worker %d online', worker.process.pid)
-    cluster.workers[worker.id].on('message', function (msg) {
-      debug('worker %d ready, calling nextWorker', worker.process.pid)
-      msg === 'ready' && nextWorker()
+    cluster.disconnect(function () {
+      restarting = false
+      clearTimeout(timeout)
+      logger.info('Cluster shutdown cleanly')
+      process.exit(0)
     })
-  })
+  }
 
   process.on('SIGUSR2', function () {
-    handleSignal()
+    restartAllWorkers({signal: 'SIGUSR2'})
   })
 
-}
+  process.on('SIGTERM', function () {
+    shutdown({signal: 'SIGTERM'})
+  })
 
-module.exports = function () {
-  return new Dutch()
+  // Fork a new worker and add it to the cluster
+  // invokes callback once the worker is safely online
+  function newWorker(callback) {
+    callback = callback || _.noop
+
+    logger.info('Creating new worker')
+
+    options.beforeFork && options.beforeFork()
+    var clusterWorker = cluster.fork(options.workerEnvironment)
+
+    var metaWorker = {
+      id: clusterWorker.id
+    , clusterWorker: clusterWorker
+    , logger: logger.child({
+        workerId: clusterWorker.id
+      , workerPid: clusterWorker.process.pid
+      })
+    , state: 'running'
+    }
+
+    workers.push(metaWorker)
+
+    clusterWorker.on('listening', function () {
+      metaWorker.logger.info('Worker listening')
+
+      callback(null)
+    })
+
+    clusterWorker.on('message', function (msg) {
+      if (msg.event === 'request-restart') {
+        if (metaWorker.state !== 'running') {
+          return
+        }
+
+        metaWorker.logger.info('Worker dying')
+
+        restartWorker(metaWorker)
+      }
+    })
+
+    clusterWorker.on('disconnect', function () {
+      metaWorker.logger.info('Worker disconnected')
+
+      if (_.contains(['running', 'exited'], metaWorker.state)) {
+        metaWorker.logger.info('Worker disconnection was unexpected')
+
+        metaWorker.state = 'disconnected'
+        newWorker()
+      }
+
+      metaWorker.state = 'disconnected'
+      stopWorker(metaWorker)
+    })
+
+    clusterWorker.on('exit', function (code, signal) {
+      metaWorker.logger.info({
+        code: code
+      , signal: signal
+      }, 'Worker exited')
+
+      if (metaWorker.killTimer) {
+        clearTimeout(metaWorker.killTimer)
+        metaWorker.killTimer = null
+      }
+
+      metaWorker.state = 'exited'
+    })
+  }
+
+  // Bring up a new worker, then gracefully close down the supplied worker
+  // then invoke the callback
+  function restartWorker(metaWorker, callback) {
+    metaWorker.logger.info('Restarting worker')
+    metaWorker.state = 'restarting'
+
+    newWorker(function () {
+      metaWorker.logger.info('Replacement worker available - disconnecting')
+
+      stopWorker(metaWorker)
+
+      callback && callback(null)
+    })
+  }
+
+  // Ensure a worker is dead or dying
+  function stopWorker(metaWorker) {
+    metaWorker.logger.debug({state: metaWorker.state}, 'Stopping worker')
+    function startKillTimer() {
+      return setTimeout(function () {
+        if (metaWorker.state === 'exited') return
+
+        metaWorker.logger.debug('Hard-killing worker as it did not die gracefully')
+
+        try {
+          metaWorker.clusterWorker.kill()
+        } catch (err) {
+          metaWorker.logger.debug(err, 'Could not kill with worker.kill()')
+        }
+
+        try {
+          metaWorker.clusterWorker.process.kill()
+        } catch (err) {
+          metaWorker.logger.debug(err, 'Could not kill with worker.process.kill()')
+        }
+      }, 30000)
+    }
+
+    switch (metaWorker.state) {
+      case 'disconnected':
+        metaWorker.logger.debug('Killing worker')
+        metaWorker.clusterWorker.kill()
+        break
+
+      case 'exited':
+        break
+
+      default:
+        metaWorker.logger.debug('Disconnecting worker')
+        metaWorker.clusterWorker.disconnect()
+    }
+
+    if (metaWorker.state !== 'exited') {
+      metaWorker.killTimer = startKillTimer()
+    }
+  }
 }
