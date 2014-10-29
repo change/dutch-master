@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "Wraps the Node cluster module to provide a full HTTP clustering solution with lifecycle management for workers.",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "test": "node_modules/.bin/jshint --exclude=node_modules ."
   },
@@ -19,6 +20,5 @@
   },
   "devDependencies": {
     "jshint": "^2.5.6"
-  },
-  "private": true
+  }
 }

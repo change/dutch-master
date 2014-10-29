@@ -103,3 +103,8 @@ No worker is stopped until a replacement worker is available (i.e. has fired
 it's `listening` event). This makes `dutch-master` suitable for applications that
 are slow to start up. This does not apply when performing a graceful stop invoked
 by `SIGTERM`.
+
+
+## License
+
+[MIT](http://opensource.org/licenses/MIT)
