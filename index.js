@@ -110,7 +110,7 @@ module.exports = function (options) {
       metaWorker.logger.info('Worker disconnected')
 
       if (_.contains(['running', 'exited'], metaWorker.state)) {
-        metaWorker.logger.info('Worker disconnection was unexpected')
+        metaWorker.logger.warn('Worker disconnection was unexpected')
 
         metaWorker.state = 'disconnected'
         newWorker()
