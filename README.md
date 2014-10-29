@@ -21,7 +21,7 @@ require('dutch-master').start({
     process.chdir('/deploys/app/current')
   },
   numWorkers: function () {
-    return Math.min(require('os').cpus().length, 2)
+    return Math.max(require('os').cpus().length, 2)
   },
   logger: require('bunyan')({name: 'my-app'}),
   workerEnvironment: {
