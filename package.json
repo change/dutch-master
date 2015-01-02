@@ -5,7 +5,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "node_modules/.bin/jshint --exclude=node_modules ."
+    "test": "node_modules/.bin/jshint --exclude=node_modules . && ./node_modules/.bin/mocha --compilers js:test/support/6to5 test"
   },
   "repository": {
     "type": "git",
@@ -19,6 +19,17 @@
     "lodash": "^2.4.1"
   },
   "devDependencies": {
-    "jshint": "^2.5.6"
+    "6to5": "^1.15.0",
+    "JSONStream": "^0.10.0",
+    "body-parser": "^1.10.0",
+    "bunyan": "^1.2.3",
+    "express": "^4.10.6",
+    "immutable": "^3.4.1",
+    "js-csp": "^0.3.2",
+    "jshint": "^2.5.6",
+    "mocha": "^2.0.1",
+    "request": "^2.51.0",
+    "transducers.js": "^0.2.3",
+    "when": "^3.6.4"
   }
 }
