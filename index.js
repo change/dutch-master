@@ -113,7 +113,7 @@ module.exports = function (options) {
         metaWorker.logger.warn('Worker disconnection was unexpected')
 
         metaWorker.state = 'disconnected'
-        newWorker()
+        newWorker(callback)
       }
 
       metaWorker.state = 'disconnected'
