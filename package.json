@@ -31,5 +31,20 @@
     "request": "^2.51.0",
     "transducers.js": "^0.2.3",
     "when": "^3.6.4"
+  },
+  "homepage": "https://github.com/change/dutch-master",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "keywords": [
+    "cluster",
+    "http",
+    "management"
+  ],
+  "author": {
+    "name": "Jon Merrifield",
+    "email": "jon@jmerrifield.com",
+    "url": "http://www.jmerrifield.com"
   }
 }
