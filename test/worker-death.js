@@ -1,18 +1,7 @@
-var csp = require('js-csp')
-  , assert = require('assert')
+let assert = require('assert')
   , workerCoordinator = require('./support/worker-coordinator')
-  , {startCluster, waitForLogMessage, takeOrTimeout} = require('./support/helpers')
-  , {take, go, alts, timeout, operations: {mult}} = csp
-
-function* takeN(ch, n) {
-  var result = []
-
-  for (var i = 0; i < n; i++) {
-    result.push(yield ch)
-  }
-
-  return result
-}
+  , {startCluster, waitForLogMessage, takeOrTimeout, takeN} = require('./support/helpers')
+  , {take, go, alts, timeout, operations: {mult}} = require('js-csp')
 
 describe('worker death', function () {
   it('works', function (done) {
