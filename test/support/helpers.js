@@ -37,19 +37,23 @@ module.exports.startCluster = function (env) {
   var nodeCmd = process.execPath
     , args = [__dirname + '/master-shim.js']
     , stdoutCh = csp.chan()
+    , exitCh = csp.chan()
 
   var ps = spawn(nodeCmd, args, {
     env: env
   , stdio: [null, 'pipe', process.stderr]
   })
 
+  ps.on('close', code => csp.putAsync(exitCh, {code}))
+
   ps.stdout
   .pipe(JSONStream.parse())
   .on('data', data => csp.putAsync(stdoutCh, data))
 
   return {
-    stdoutCh: stdoutCh
+    stdoutCh
   , pid: ps.pid
+  , exitCh
   }
 }
 
