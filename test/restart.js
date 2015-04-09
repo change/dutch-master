@@ -144,7 +144,7 @@ context('all workers running normally', function () {
         var listeningCh = this.coordinator.tellWorker(replacementWorkerId, 'startListening')
 
         // Grab the port that the cluster is listening on
-        this.clusterPort = (yield csp.take(listeningCh)).map(x => x.get('clusterPort')).first()
+        this.clusterPort = (yield csp.take(listeningCh)).get('clusterPort')
 
         yield* helpers.takeOrTimeout(this.clusterReadyCh, 'Waiting for Cluster Ready log message')
 

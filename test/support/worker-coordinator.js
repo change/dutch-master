@@ -91,8 +91,16 @@ module.exports = function () {
 
   // Issues an instruction to the specified worker id, returns a channel that
   // will have a map placed on it containing the response from the worker
-  function tellWorker(workerId, action) {
-    return tellWorkers(immutable.fromJS([workerId]), action)
+  function tellWorker(workerId, action, RecordType) {
+    return csp.go(function* () {
+      var instructionId = crypto.randomBytes(16).toString('hex')
+        , completionUrl = '/instruction/' + instructionId + '/complete'
+        , completeCh = requestToChan('post', completionUrl, RecordType)
+
+      yield csp.put(instructionChMap.get(workerId), {action, completionUrl})
+
+      return yield csp.take(completeCh)
+    })
   }
 
   return {
