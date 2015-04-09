@@ -2,7 +2,7 @@ let assert = require('assert')
   , immutable = require('immutable')
   , workerCoordinator = require('./support/worker-coordinator')
   , {startCluster, waitForLogMessage, takeOrTimeout, httpGetToChan} = require('./support/helpers')
-  , {go, take, operations: {merge, mult}} = require('js-csp')
+  , {go, take, operations: {mult}} = require('js-csp')
 
 function assertRestart(numWorkers) {
   afterEach(function () {
@@ -19,22 +19,22 @@ function assertRestart(numWorkers) {
         go(function* () {
           let restartCompleteCh = waitForLogMessage('Restart complete', this.logMult)
 
-          this.workerSigtermChans = this.initialWorkerIds.map(id => {
-            return this.coordinator.requestToChan('post', `/worker/${id}/signal/SIGTERM`)
-          })
+          this.w1SigtermCh = this.coordinator.requestToChan('post', `/worker/${this.w1}/signal/SIGTERM`)
+          this.w2SigtermCh = this.coordinator.requestToChan('post', `/worker/${this.w2}/signal/SIGTERM`)
 
           process.kill(this.cluster.pid, 'SIGUSR2')
 
           // Wait for replacement workers to come online
-          this.newWorkerIds = immutable.Set()
-          for (let i = 0; i < numWorkers; i++) {
-            this.newWorkerIds = this.newWorkerIds.add(yield take(this.coordinator.workerActiveCh))
-          }
+          this.w3 = yield take(this.coordinator.workerActiveCh)
+          this.w4 = yield take(this.coordinator.workerActiveCh)
 
-          yield take(this.coordinator.tellWorkers(this.newWorkerIds, 'startListening'))
+          yield take(this.coordinator.tellWorker(this.w3, 'startListening'))
+          yield take(this.coordinator.tellWorker(this.w4, 'startListening'))
 
           yield take(restartCompleteCh)
-          this.coordinator.tellWorkers(this.initialWorkerIds, 'completeLongRequest')
+
+          this.coordinator.tellWorker(this.w1, 'completeLongRequest')
+          this.coordinator.tellWorker(this.w2, 'completeLongRequest')
           done()
         }.bind(this))
       })
@@ -52,7 +52,7 @@ function assertRestart(numWorkers) {
           let helloWorldResp = yield take(httpGetToChan(`http://localhost:${this.clusterPort}/`))
           assert.equal(200, helloWorldResp.get('status'))
           assert(
-            this.newWorkerIds.contains(helloWorldResp.getIn(['body', 'workerId']))
+            immutable.Set([this.w3, this.w4]).contains(helloWorldResp.getIn(['body', 'workerId']))
           , 'Request was handled by an OLD worker'
           )
           done()
@@ -61,11 +61,8 @@ function assertRestart(numWorkers) {
 
       it('should send SIGTERM to the old workers', function (done) {
         go(function* () {
-          let merged = merge(this.workerSigtermChans.toArray())
-
-          for (let i = 0; i < this.workerSigtermChans.count(); i++) {
-            yield take(merged)
-          }
+          yield* takeOrTimeout(this.w1SigtermCh, 'Waiting for w1 to receive SIGTERM')
+          yield* takeOrTimeout(this.w2SigtermCh, 'Waiting for w2 to receive SIGTERM')
 
           done()
         }.bind(this))
@@ -96,18 +93,15 @@ context('all workers running normally', function () {
     beforeEach(function (done) {
       go(function* () {
         // Wait for workers to be started by the cluster
-        let workerIds = []
-        for (let i = 0; i < numWorkers; i++) {
-          workerIds.push(yield take(this.coordinator.workerActiveCh))
-        }
-        this.initialWorkerIds = immutable.Set(workerIds)
-
+        this.w1 = yield take(this.coordinator.workerActiveCh)
+        this.w2 = yield take(this.coordinator.workerActiveCh)
 
         // Tell workers to start listening
-        let listeningCh = this.coordinator.tellWorkers(this.initialWorkerIds, 'startListening')
+        let listeningCh = this.coordinator.tellWorker(this.w1, 'startListening')
+        this.coordinator.tellWorker(this.w2, 'startListening')
 
         // Grab the port that the cluster is listening on
-        this.clusterPort = (yield take(listeningCh)).map(x => x.get('clusterPort')).first()
+        this.clusterPort = (yield take(listeningCh)).get('clusterPort')
 
         yield* takeOrTimeout(this.clusterReadyCh, 'Waiting for Cluster Ready log message')
 
@@ -122,26 +116,20 @@ context('all workers running normally', function () {
     beforeEach(function(done) {
       go(function*() {
         // Wait for workers to be started by the cluster
-        let workerIds = []
-        for (let i = 0; i < numWorkers; i++) {
-          workerIds.push(yield take(this.coordinator.workerActiveCh))
-        }
-        this.initialWorkerIds = immutable.Set(workerIds)
+        let w1a = yield take(this.coordinator.workerActiveCh)
+        this.w2 = yield take(this.coordinator.workerActiveCh)
 
         // Tell one worker to crash
-        let badWorkerId = this.initialWorkerIds.first()
-        this.coordinator.tellWorker(badWorkerId, 'crash')
+        this.coordinator.tellWorker(w1a, 'crash')
 
-        // Tell the other workers to start listening
-        let goodWorkerIds = this.initialWorkerIds.rest()
-        this.coordinator.tellWorkers(goodWorkerIds, 'startListening')
+        // Tell the other worker to start listening
+        this.coordinator.tellWorker(this.w2, 'startListening')
 
         // Wait for another worker to come online
-        let replacementWorkerId = yield take(this.coordinator.workerActiveCh)
-        this.initialWorkerIds = this.initialWorkerIds.add(replacementWorkerId).delete(badWorkerId)
+        this.w1 = yield take(this.coordinator.workerActiveCh)
 
         // Tell that worker to start listening
-        let listeningCh = this.coordinator.tellWorker(replacementWorkerId, 'startListening')
+        let listeningCh = this.coordinator.tellWorker(this.w1, 'startListening')
 
         // Grab the port that the cluster is listening on
         this.clusterPort = (yield take(listeningCh)).get('clusterPort')
