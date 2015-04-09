@@ -52,3 +52,14 @@ module.exports.startCluster = function (env) {
   , pid: ps.pid
   }
 }
+
+module.exports.takeOrTimeout = function* (ch, msg) {
+  var timeout = csp.timeout(1000)
+
+  var val = yield csp.alts([ch, timeout])
+  if (val.channel === timeout) {
+    throw new Error('Timed out while "' + msg + '"')
+  }
+
+  return val
+}

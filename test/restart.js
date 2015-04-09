@@ -4,17 +4,6 @@ var csp = require('js-csp')
   , workerCoordinator = require('./support/worker-coordinator')
   , helpers = require('./support/helpers')
 
-function* takeOrTimeout(ch, msg) {
-  var timeout = csp.timeout(1000)
-
-  var val = yield csp.alts([ch, timeout])
-  if (val.channel === timeout) {
-    throw new Error('Timed out while "' + msg + '"')
-  }
-
-  return val
-}
-
 function assertRestart(numWorkers) {
   afterEach(function () {
     process.kill(this.cluster.pid, 'SIGKILL')
@@ -120,7 +109,7 @@ context('all workers running normally', function () {
         // Grab the port that the cluster is listening on
         this.clusterPort = (yield csp.take(listeningCh)).map(x => x.get('clusterPort')).first()
 
-        yield* takeOrTimeout(this.clusterReadyCh, 'Waiting for Cluster Ready log message')
+        yield* helpers.takeOrTimeout(this.clusterReadyCh, 'Waiting for Cluster Ready log message')
 
         done()
       }.bind(this))
@@ -157,7 +146,7 @@ context('all workers running normally', function () {
         // Grab the port that the cluster is listening on
         this.clusterPort = (yield csp.take(listeningCh)).map(x => x.get('clusterPort')).first()
 
-        yield* takeOrTimeout(this.clusterReadyCh, 'Waiting for Cluster Ready log message')
+        yield* helpers.takeOrTimeout(this.clusterReadyCh, 'Waiting for Cluster Ready log message')
 
         done()
       }.bind(this))
