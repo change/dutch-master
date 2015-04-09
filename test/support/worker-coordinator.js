@@ -54,20 +54,6 @@ module.exports = function () {
     csp.putAsync(portCh, server.address().port)
   })
 
-  // Issues an instruction to the specified worker id, returns a channel that
-  // will have a map placed on it containing the response from the worker
-  function tellWorker(workerId, action, RecordType) {
-    return csp.go(function* () {
-      var instructionId = crypto.randomBytes(16).toString('hex')
-        , completionUrl = '/instruction/' + instructionId + '/complete'
-        , completeCh = requestToChan('post', completionUrl, RecordType)
-
-      yield csp.put(instructionChMap.get(workerId), {action, completionUrl})
-
-      return yield csp.take(completeCh)
-    })
-  }
-
   return {
     // Channel that will have the port number of this coordinator placed
     // on it once it starts listening
@@ -77,7 +63,18 @@ module.exports = function () {
     // becomes active
   , workerActiveCh: workerActiveCh
 
-  , tellWorker: tellWorker
-  , requestToChan: requestToChan
+    // Issues an instruction to the specified worker id, returns a channel that
+    // will have a map placed on it containing the response from the worker
+  , tellWorker: function (workerId, action, RecordType) {
+      return csp.go(function* () {
+        var instructionId = crypto.randomBytes(16).toString('hex')
+          , completionUrl = '/instruction/' + instructionId + '/complete'
+          , completeCh = requestToChan('post', completionUrl, RecordType)
+
+        yield csp.put(instructionChMap.get(workerId), {action, completionUrl})
+
+        return yield csp.take(completeCh)
+      })
+    }
   }
 }

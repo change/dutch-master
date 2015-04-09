@@ -19,8 +19,8 @@ function assertRestart(numWorkers) {
         go(function* () {
           let restartCompleteCh = waitForLogMessage('Restart complete', this.logMult)
 
-          this.w1SigtermCh = this.coordinator.requestToChan('post', `/worker/${this.w1}/signal/SIGTERM`)
-          this.w2SigtermCh = this.coordinator.requestToChan('post', `/worker/${this.w2}/signal/SIGTERM`)
+          this.w1SigtermCh = this.coordinator.tellWorker(this.w1, 'notifySigterm')
+          this.w2SigtermCh = this.coordinator.tellWorker(this.w2, 'notifySigterm')
 
           process.kill(this.cluster.pid, 'SIGUSR2')
 

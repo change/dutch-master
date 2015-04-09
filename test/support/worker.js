@@ -26,12 +26,6 @@ function ensureLongReqState() {
   return sharedState.get('longRequestDefer')
 }
 
-process.on('SIGTERM', function () {
-  request.post(workerInfoUrl + '/signal/SIGTERM', {json: {}}, function () {
-    process.exit(143)
-  })
-})
-
 // Simple happy-path endpoint
 app.get('/', function (req, res) {
   res.json({workerId: cluster.worker.id})
@@ -63,6 +57,14 @@ function waitForInstruction() {
           json: {
             clusterPort: server.address().port
           }
+        })
+      })
+    }
+
+    if (body.action === 'notifySigterm') {
+      process.on('SIGTERM', function () {
+        request.post(coordinatorUrl + body.completionUrl, function () {
+          process.exit(143)
         })
       })
     }
