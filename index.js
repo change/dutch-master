@@ -83,13 +83,14 @@ module.exports = function (options) {
         workerId: clusterWorker.id
       , workerPid: clusterWorker.process.pid
       })
-    , state: 'running'
+    , state: 'starting'
     }
 
     workers.push(metaWorker)
 
     clusterWorker.on('listening', function () {
       metaWorker.logger.info('Worker listening')
+      metaWorker.state = 'running'
 
       callback(null)
     })
@@ -109,11 +110,18 @@ module.exports = function (options) {
     clusterWorker.on('disconnect', function () {
       metaWorker.logger.info('Worker disconnected')
 
-      if (_.contains(['running', 'exited'], metaWorker.state)) {
-        metaWorker.logger.warn('Worker disconnection was unexpected')
+      if (metaWorker.state === 'starting') {
+        metaWorker.logger.warn('Worker disconnected unexpectedly while starting')
 
         metaWorker.state = 'disconnected'
         newWorker(callback)
+      }
+
+      if (metaWorker.state === 'running') {
+        metaWorker.logger.warn('Worker disconnection was unexpected')
+
+        metaWorker.state = 'disconnected'
+        newWorker()
       }
 
       metaWorker.state = 'disconnected'
