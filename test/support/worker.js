@@ -79,6 +79,11 @@ function waitForInstruction() {
       process.exit(1)
     }
 
+    if (body.action === 'requestRestart') {
+      process.send({event: 'request-restart'})
+      request.post(coordinatorUrl + body.completionUrl)
+    }
+
     waitForInstruction()
   })
 }

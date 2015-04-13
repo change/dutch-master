@@ -3,7 +3,7 @@
 
 require('../../')({
   worker: __dirname + '/worker.js',
-  numWorkers: 2,
+  numWorkers: process.env.numWorkers || 2,
   logger: require('bunyan').createLogger({
     name: 'shim'
   }),
