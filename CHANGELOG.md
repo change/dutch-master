@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.3
+
+* Fix regression introduced in v0.1.2 where `dutch-master` would crash if a worker terminated unexpectedly.
+* Extra test coverage.
+
 ## v0.1.2
 
 * Introduce functional tests
