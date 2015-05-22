@@ -88,7 +88,7 @@ module.exports = function (options) {
 
     workers.push(metaWorker)
 
-    clusterWorker.on('listening', function () {
+    clusterWorker.once('listening', function () {
       metaWorker.logger.info('Worker listening')
       metaWorker.state = 'running'
 
