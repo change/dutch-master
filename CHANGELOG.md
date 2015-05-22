@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.4
+
+* Only listen for worker 'listening' event once
+
+  Modules like statsd clients that create ephemeral sockets
+  can cause many 'listening' events to occur. Make sure dutch-master
+  only responds to the first one.
+
+  NOTE: Workers should ensure that the first 'listening' event that occurs
+  signals their readiness to join the cluster i.e. do not create an
+  ephemeral socket as part of the worker startup before starting to
+  listen for actual connections.
+
 ## v0.1.3
 
 * Fix regression introduced in v0.1.2 where `dutch-master` would crash if a worker terminated unexpectedly.
