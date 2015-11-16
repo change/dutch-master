@@ -7,7 +7,7 @@ module.exports = function (options) {
     , workers = []
     , restarting = false
 
-  var numWorkers = _.result(options, numWorkers, 2);
+  var numWorkers = _.result(options, 'numWorkers', 2);
 
   cluster.setupMaster({
     exec: options.worker
