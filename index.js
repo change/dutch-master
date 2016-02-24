@@ -45,6 +45,10 @@ module.exports = function (options) {
 
     restarting = true
 
+    _.each(workers, function (worker) {
+      worker.state = 'stopping'
+    })
+
     var timeout = setTimeout(function () {
       logger.warn('Cluster did not shutdown cleanly within timeout, exiting')
       process.exit(1)
