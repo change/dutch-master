@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5
+
+* Explicitly stop workers when shutting down, since cluster.disconnect does not handle workers that do not close cleanly.
+
+* Reduce timeouts, making sure the individual worker timeout is much shorter than the cluster shutdown timeout, so the cluster won't be killed before the workers have been cleaned up.
+
 ## v0.1.4
 
 * Only listen for worker 'listening' event once
