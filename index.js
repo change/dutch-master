@@ -47,12 +47,13 @@ module.exports = function (options) {
 
     _.each(workers, function (worker) {
       worker.state = 'stopping'
+      stopWorker(worker)
     })
 
     var timeout = setTimeout(function () {
       logger.warn('Cluster did not shutdown cleanly within timeout, exiting')
       process.exit(1)
-    }, 30000)
+    }, 10000)
 
     cluster.disconnect(function () {
       restarting = false
@@ -182,7 +183,7 @@ module.exports = function (options) {
         } catch (err) {
           metaWorker.logger.debug(err, 'Could not kill with worker.process.kill()')
         }
-      }, 30000)
+      }, 5000)
     }
 
     switch (metaWorker.state) {
