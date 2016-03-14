@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.6
+
+* Update lodash depdendency to a supported version
+
 ## v0.1.5
 
 * Explicitly stop workers when shutting down, since cluster.disconnect does not handle workers that do not close cleanly.
