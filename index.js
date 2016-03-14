@@ -34,7 +34,7 @@ module.exports = function (options) {
 
     restarting = true
 
-    async.each(_.where(workers, {state: 'running'}), restartWorker, function (err) {
+    async.each(_.filter(workers, {state: 'running'}), restartWorker, function (err) {
       logger.info('Restart complete')
       restarting = false
     })
