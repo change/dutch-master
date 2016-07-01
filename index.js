@@ -52,12 +52,8 @@ module.exports = function (options) {
       process.exit(1)
     }, 10000)
 
-    var workersAllExited= function() {
-      return _.every(workers, {state: 'exited'})
-    }
-
     var cleanExit = function () {
-      if (workersAllExited()) {
+      if (_.every(workers, {state: 'exited'})) {
         restarting = false
         clearTimeout(timeout)
         logger.info('Cluster shutdown cleanly')
