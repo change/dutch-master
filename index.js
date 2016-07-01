@@ -52,12 +52,20 @@ module.exports = function (options) {
       process.exit(1)
     }, 10000)
 
-    cluster.disconnect(function () {
-      restarting = false
-      clearTimeout(timeout)
-      logger.info('Cluster shutdown cleanly')
-      process.exit(0)
-    })
+    var cleanExit = function () {
+      if (_.every(workers, {state: 'exited'})) {
+        restarting = false
+        clearTimeout(timeout)
+        logger.info('Cluster shutdown cleanly')
+        process.exit(0)
+        return
+      }
+
+      logger.info("workers not yet exited, sleeping 250ms")
+      setTimeout(cleanExit, 250)
+    }
+
+    cluster.disconnect(cleanExit)
   }
 
   process.on('SIGUSR2', function () {
