@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.7
+
+* Fix shutdown condition where children are orphaned
+
 ## v0.1.6
 
 * Update lodash depdendency to a supported version
