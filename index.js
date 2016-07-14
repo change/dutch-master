@@ -6,6 +6,7 @@ module.exports = function (options) {
   var logger = options.logger
     , workers = []
     , restarting = false
+    , restartSignal = options.restartSignal || 'SIGUSR2'
 
   var numWorkers = _.result(options, 'numWorkers', 2);
 
@@ -68,8 +69,8 @@ module.exports = function (options) {
     cluster.disconnect(cleanExit)
   }
 
-  process.on('SIGUSR2', function () {
-    restartAllWorkers({signal: 'SIGUSR2'})
+  process.on(restartSignal, function () {
+    restartAllWorkers({signal: restartSignal})
   })
 
   process.on('SIGTERM', function () {
