@@ -56,10 +56,12 @@ place to `chdir` to a newly symlinked release directory. Optional.
 * `logger`: A [bunyan](https://github.com/trentm/node-bunyan) logger instance.
 * `workerEnvironment`: Object describing the environment variables that the worker
 will have access to. Passed directly to `cluster.fork`. Optional, defaults to `{}`
+* `restartSignal`: The signal to trigger a rolling restart, by default it's `SIGUSR2`
 
 ## Signal: `SIGUSR2`
 
-Initiates a rolling restart when received.
+Initiates a rolling restart when received.  You can also set the `restartSignal` option
+to restart with a different signal (a common signal to trigger rolling restarts is SIGHUP).
 
 ## Signal: `SIGTERM`
 
