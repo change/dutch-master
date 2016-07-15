@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.0
+
+* Configurable restart signal
+
 ## v0.1.7
 
 * Fix shutdown condition where children are orphaned
