@@ -19,8 +19,8 @@
     "lodash": "^4.17.11"
   },
   "devDependencies": {
+    "@babel/register": "^7.4.0",
     "JSONStream": "^0.10.0",
-    "babel": "^5.0.12",
     "body-parser": "^1.10.0",
     "bunyan": "^1.2.3",
     "express": "^4.10.6",
