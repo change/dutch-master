@@ -62,7 +62,7 @@ module.exports = function (options) {
         return
       }
 
-      logger.info("workers not yet exited, sleeping 250ms")
+      logger.info('workers not yet exited, sleeping 250ms')
       setTimeout(cleanExit, 250)
     }
 
