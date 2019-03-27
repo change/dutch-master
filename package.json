@@ -22,7 +22,7 @@
     "@babel/register": "^7.4.0",
     "JSONStream": "^0.10.0",
     "body-parser": "^1.10.0",
-    "bunyan": "^1.2.3",
+    "bunyan": "^1.8.12",
     "express": "^4.10.6",
     "immutable": "^3.4.1",
     "js-csp": "^0.4.0",
